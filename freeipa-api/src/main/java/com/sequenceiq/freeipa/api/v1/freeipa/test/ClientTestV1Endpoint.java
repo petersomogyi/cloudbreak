@@ -2,9 +2,11 @@ package com.sequenceiq.freeipa.api.v1.freeipa.test;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import com.sequenceiq.service.api.doc.ContentType;
@@ -21,4 +23,22 @@ public interface ClientTestV1Endpoint {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Retrieves user information", produces = ContentType.JSON, nickname = "userShowV1")
     String userShow(@PathParam("id") Long id, @PathParam("name") String name);
+
+    @GET
+    @Path("rights")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Retrieves rights information", produces = ContentType.JSON, nickname = "rightsV1")
+    String getRight(@QueryParam("crn") String crn);
+
+    @POST
+    @Path("cluster-proxy/register")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Registers FreeIPA stack with cluster proxy", produces = ContentType.JSON, nickname = "clusterProxyRegisterV1")
+    String registerWithClusterProxy(@QueryParam("envCrn") String envCrn);
+
+    @POST
+    @Path("cluster-proxy/deregister")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Deregisters FreeIPA stack with cluster proxy", produces = ContentType.JSON, nickname = "clusterProxyDeregisterV1")
+    void deregisterWithClusterProxy(@QueryParam("envCrn") String envCrn);
 }
