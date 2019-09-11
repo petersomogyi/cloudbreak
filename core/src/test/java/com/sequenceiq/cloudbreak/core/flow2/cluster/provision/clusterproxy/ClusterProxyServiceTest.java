@@ -108,7 +108,7 @@ public class ClusterProxyServiceTest {
         ClusterServiceCredential cloudbreakUser = new ClusterServiceCredential("cloudbreak", "/cb/test-data/secret/cbpassword:secret");
         ClusterServiceCredential dpUser = new ClusterServiceCredential("cmmgmt", "/cb/test-data/secret/dppassword:secret", true);
         ClusterServiceConfig service = new ClusterServiceConfig("cloudera-manager",
-                List.of("https://10.10.10.10/clouderamanager"), asList(cloudbreakUser, dpUser));
+                List.of("https://10.10.10.10/clouderamanager"), asList(cloudbreakUser, dpUser), null);
         return new ConfigRegistrationRequest("stack-crn", List.of(String.valueOf(CLUSTER_ID)), List.of(service));
     }
 

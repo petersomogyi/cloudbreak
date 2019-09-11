@@ -4,6 +4,7 @@ import javax.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.sequenceiq.cloudbreak.client.HttpClientConfig;
@@ -23,6 +24,13 @@ public class FreeIpaClientFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(FreeIpaClientFactory.class);
 
     private static final String ADMIN_USER = "admin";
+
+    // TODO pull these out into ClusterProxyConfiguration object
+    @Value("${clusterProxy.enabled:false}")
+    private boolean clusterProxyIntegrationEnabled;
+
+    @Value("${clusterProxy.url:}")
+    private String clusterProxyUrl;
 
     @Inject
     private GatewayConfigService gatewayConfigService;
@@ -52,14 +60,21 @@ public class FreeIpaClientFactory {
     public FreeIpaClient getFreeIpaClientForStack(Stack stack) throws FreeIpaClientException {
         LOGGER.debug("Creating FreeIpaClient for stack {}", stack.getResourceCrn());
 
-        GatewayConfig primaryGatewayConfig = gatewayConfigService.getPrimaryGatewayConfig(stack);
-        HttpClientConfig httpClientConfig = tlsSecurityService.buildTLSClientConfigForPrimaryGateway(
-                stack.getId(), primaryGatewayConfig.getPublicAddress());
-        FreeIpa freeIpa = freeIpaService.findByStack(stack);
-
         try {
-            return new FreeIpaClientBuilder(ADMIN_USER, freeIpa.getAdminPassword(), freeIpa.getDomain().toUpperCase(),
-                    httpClientConfig, stack.getGatewayport().toString()).build();
+            if (clusterProxyIntegrationEnabled) {
+                HttpClientConfig httpClientConfig = tlsSecurityService.buildTLSClientConfigForPrimaryGateway(
+                        stack.getId(), "localhost");
+                FreeIpa freeIpa = freeIpaService.findByStack(stack);
+                return new FreeIpaClientBuilder(ADMIN_USER, freeIpa.getAdminPassword(), freeIpa.getDomain().toUpperCase(),
+                        httpClientConfig, "10080", "/proxy/" + stack.getResourceCrn() + "/freeipa/ipa").build();
+            } else {
+                GatewayConfig gatewayConfig = gatewayConfigService.getPrimaryGatewayConfig(stack);
+                HttpClientConfig httpClientConfig = tlsSecurityService.buildTLSClientConfigForPrimaryGateway(
+                        stack.getId(), gatewayConfig.getPublicAddress());
+                FreeIpa freeIpa = freeIpaService.findByStack(stack);
+                return new FreeIpaClientBuilder(ADMIN_USER, freeIpa.getAdminPassword(), freeIpa.getDomain().toUpperCase(),
+                        httpClientConfig, stack.getGatewayport().toString()).build();
+            }
         } catch (Exception e) {
             throw new FreeIpaClientException("Couldn't build FreeIPA client. "
                     + "Check if the FreeIPA security rules have not changed and the instance is in running state. " + e.getLocalizedMessage(), e);

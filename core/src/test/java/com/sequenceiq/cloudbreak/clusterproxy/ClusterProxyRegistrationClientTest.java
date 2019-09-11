@@ -43,6 +43,8 @@ public class ClusterProxyRegistrationClientTest {
 
     private static final String REMOVE_CONFIG_PATH = "/rpc/removeConfig";
 
+    private static final List<String> CERTIFICATES = asList("certificate1", "certificate2");
+
     private MockRestServiceServer mockServer;
 
     private ClusterProxyRegistrationClient service;
@@ -61,7 +63,7 @@ public class ClusterProxyRegistrationClientTest {
     @Test
     public void shouldRegisterProxyConfigurationWithClusterProxy() throws URISyntaxException, JsonProcessingException {
         ClusterServiceConfig clusterServiceConfig = clusterServiceConfig();
-        ConfigRegistrationRequest request = configRegistrationRequest(STACK_CRN, CLUSTER_ID, clusterServiceConfig);
+        ConfigRegistrationRequest request = configRegistrationRequest(STACK_CRN, CLUSTER_ID, clusterServiceConfig, CERTIFICATES);
 
         ConfigRegistrationResponse response = new ConfigRegistrationResponse();
         response.setX509Unwrapped("X509PublicKey");
@@ -102,11 +104,11 @@ public class ClusterProxyRegistrationClientTest {
         ClusterServiceCredential cloudbreakUser = new ClusterServiceCredential("cloudbreak", "/cb/test-data/secret/cbpassword:secret");
         ClusterServiceCredential dpUser = new ClusterServiceCredential("cmmgmt", "/cb/test-data/secret/dppassword:secret", true);
         return new ClusterServiceConfig("cloudera-manager",
-                List.of("https://10.10.10.10/clouderamanager"), asList(cloudbreakUser, dpUser));
+                List.of("https://10.10.10.10/clouderamanager"), asList(cloudbreakUser, dpUser), null);
     }
 
-    private ConfigRegistrationRequest configRegistrationRequest(String stackCrn, String clusterId, ClusterServiceConfig serviceConfig) {
-        return new ConfigRegistrationRequest(stackCrn, List.of(clusterId), List.of(serviceConfig));
+    private ConfigRegistrationRequest configRegistrationRequest(String stackCrn, String clusterId, ClusterServiceConfig serviceConfig, List<String> certificates) {
+        return new ConfigRegistrationRequest(stackCrn, List.of(clusterId), List.of(serviceConfig), certificates);
     }
 
     private ConfigUpdateRequest configUpdateRequest(String stackCrn, String knoxUri) {
