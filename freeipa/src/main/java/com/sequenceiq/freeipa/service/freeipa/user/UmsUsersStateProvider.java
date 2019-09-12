@@ -40,6 +40,7 @@ public class UmsUsersStateProvider {
     public Map<String, UsersState> getEnvToUmsUsersStateMap(String accountId, String actorCrn, Set<String> environmentCrns,
                                                             Set<String> userCrns, Set<String> machineUserCrns) {
         try {
+            LOGGER.debug("accountId = {}, actorCrn = {}", accountId, actorCrn);
             Optional<String> requestIdOptional = Optional.ofNullable(MDCBuilder.getMdcContextMap().get(LoggerContextKey.REQUEST_ID.toString()));
             if (!requestIdOptional.isPresent()) {
                 requestIdOptional = Optional.of(UUID.randomUUID().toString());
@@ -52,8 +53,10 @@ public class UmsUsersStateProvider {
 
             List<User> users = userCrns.isEmpty() ? umsClient.listAllUsers(actorCrn, accountId, requestIdOptional)
                     : umsClient.listUsers(actorCrn, accountId, List.copyOf(userCrns), requestIdOptional);
+            LOGGER.debug("users = [{}]", users);
             List<MachineUser> machineUsers = machineUserCrns.isEmpty() ? umsClient.listAllMachineUsers(actorCrn, accountId, requestIdOptional)
                     : umsClient.listMachineUsers(actorCrn, accountId, List.copyOf(machineUserCrns), requestIdOptional);
+            LOGGER.debug("machineUsers = [{}]", machineUsers);
 
             Map<String, FmsGroup> crnToFmsGroup = umsClient.listGroups(actorCrn, accountId, List.of(), requestIdOptional).stream()
                     .collect(Collectors.toMap(Group::getCrn, this::umsGroupToGroup));
@@ -139,9 +142,13 @@ public class UmsUsersStateProvider {
         Optional<String> requestIdOptional = Optional.ofNullable(requestIdThreadLocal.get());
 
         GetRightsResponse rightsResponse = umsClient.getRightsForUser(actorCrn, memberCrn, environmentCrn, requestIdOptional);
+        LOGGER.debug("usersStateBuilder {}", userStateBuilder);
+        LOGGER.debug("crnToFmsGroup {}", crnToFmsGroup);
         if (isEnvironmentUser(environmentCrn, rightsResponse)) {
             userStateBuilder.addUser(fmsUser);
             rightsResponse.getGroupCrnList().stream().forEach(gcrn -> {
+                LOGGER.debug("gcrn {}", gcrn);
+                LOGGER.debug("crnToFmsGroup.get(gcrn) {}", crnToFmsGroup.get(gcrn));
                 userStateBuilder.addMemberToGroup(crnToFmsGroup.get(gcrn).getName(), fmsUser.getName());
             });
 

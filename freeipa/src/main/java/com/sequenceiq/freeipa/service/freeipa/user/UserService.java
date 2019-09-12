@@ -288,11 +288,11 @@ public class UserService {
     @VisibleForTesting
     void validateParameters(String accountId, String actorCrn, Set<String> environmentCrnFilter,
             Set<String> userCrnFilter, Set<String> machineUserCrnFilter) {
-        requireNonNull(accountId);
-        requireNonNull(actorCrn);
-        requireNonNull(environmentCrnFilter);
-        requireNonNull(userCrnFilter);
-        requireNonNull(machineUserCrnFilter);
+        requireNonNull(accountId, "accountId must not be null");
+        requireNonNull(actorCrn, "actorCrn must not be null");
+        requireNonNull(environmentCrnFilter, "environmentCrnFilter must not be null");
+        requireNonNull(userCrnFilter, "userCrnFilter must not be null");
+        requireNonNull(machineUserCrnFilter, "machineUserCrnFilter must not be null");
         validateCrnFilter(environmentCrnFilter, Crn.ResourceType.ENVIRONMENT);
         validateCrnFilter(userCrnFilter, Crn.ResourceType.USER);
         validateCrnFilter(machineUserCrnFilter, Crn.ResourceType.MACHINE_USER);
