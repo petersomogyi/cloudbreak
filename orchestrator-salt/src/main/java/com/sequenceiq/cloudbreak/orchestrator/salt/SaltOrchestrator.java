@@ -652,18 +652,8 @@ public class SaltOrchestrator implements HostOrchestrator {
             try (ZipOutputStream zout = new ZipOutputStream(baos)) {
                 ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
                 Map<String, List<Resource>> structure = new TreeMap<>();
-                for (Resource resource : resolver.getResources("classpath*:salt/**")) {
-                    String path = resource.getURL().getPath();
-                    String dir = path.substring(path.indexOf("/salt") + "/salt".length(), path.lastIndexOf('/') + 1);
-                    List<Resource> list = structure.get(dir);
-                    if (list == null) {
-                        list = new ArrayList<>();
-                    }
-                    structure.put(dir, list);
-                    if (!path.endsWith("/")) {
-                        list.add(resource);
-                    }
-                }
+                fillStructureWithResources(resolver, structure, "salt-common");
+                fillStructureWithResources(resolver, structure, "salt");
                 for (Entry<String, List<Resource>> entry : structure.entrySet()) {
                     zout.putNextEntry(new ZipEntry(entry.getKey()));
                     for (Resource resource : entry.getValue()) {
@@ -958,5 +948,21 @@ public class SaltOrchestrator implements HostOrchestrator {
             LOGGER.info("Minions ip address collection returned null value");
         }
         return responsiveNodes;
+    }
+
+    private void fillStructureWithResources(ResourcePatternResolver resolver, Map<String, List<Resource>> structure,
+            String folder) throws IOException {
+        for (Resource resource : resolver.getResources(String.format("classpath*:%s/**", folder))) {
+            String path = resource.getURL().getPath();
+            String dir = path.substring(path.indexOf(String.format("/%s", folder)) + String.format("/%s", folder).length(), path.lastIndexOf('/') + 1);
+            List<Resource> list = structure.get(dir);
+            if (list == null) {
+                list = new ArrayList<>();
+            }
+            structure.put(dir, list);
+            if (!path.endsWith("/")) {
+                list.add(resource);
+            }
+        }
     }
 }

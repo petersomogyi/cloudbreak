@@ -115,6 +115,36 @@ public class TelemetryApiConverter {
         return response;
     }
 
+    public TelemetryRequest convertToRequest(EnvironmentTelemetry telemetry) {
+        TelemetryRequest telemetryRequest = null;
+        if (telemetry != null) {
+            telemetryRequest = new TelemetryRequest();
+            telemetryRequest.setFluentAttributes(telemetry.getFluentAttributes());
+            if (telemetry.getLogging() != null) {
+                LoggingRequest loggingRequest = null;
+                if (telemetry.getLogging() != null) {
+                    loggingRequest = new LoggingRequest();
+                    loggingRequest.setStorageLocation(telemetry.getLogging().getStorageLocation());
+                    if (telemetry.getLogging().getS3() != null) {
+                        S3CloudStorageV1Parameters s3Params = convertS3(telemetry.getLogging().getS3());
+                        loggingRequest.setS3(s3Params);
+                    }
+                    if (telemetry.getLogging().getWasb() != null) {
+                        WasbCloudStorageV1Parameters wasbParams = convertWasb(telemetry.getLogging().getWasb());
+                        loggingRequest.setWasb(wasbParams);
+                    }
+                }
+                if (telemetry.getFeatures() != null) {
+                    FeaturesRequest featuresRequest = new FeaturesRequest();
+                    featuresRequest.setReportDeploymentLogs(telemetry.getFeatures().getReportDeploymentLogs());
+                    telemetryRequest.setFeatures(featuresRequest);
+                }
+                telemetryRequest.setLogging(loggingRequest);
+            }
+        }
+        return telemetryRequest;
+    }
+
     private S3CloudStorageV1Parameters convertS3(S3CloudStorageParameters s3) {
         S3CloudStorageV1Parameters s3CloudStorageV1Parameters = null;
         if (s3 != null) {

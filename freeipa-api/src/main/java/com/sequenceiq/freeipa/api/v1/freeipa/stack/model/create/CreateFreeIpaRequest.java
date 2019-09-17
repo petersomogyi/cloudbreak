@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.sequenceiq.common.api.telemetry.request.TelemetryRequest;
 import com.sequenceiq.freeipa.api.v1.freeipa.stack.doc.FreeIpaModelDescriptions;
 import com.sequenceiq.freeipa.api.v1.freeipa.stack.model.FreeIpaServerRequest;
 import com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.image.ImageSettingsRequest;
@@ -61,6 +62,9 @@ public class CreateFreeIpaRequest {
     @Min(value = 1025, message = "Port should be between 1025 and 65535")
     @Max(value = 65535, message = "Port should be between 1025 and 65535")
     private Integer gatewayPort;
+
+    @ApiModelProperty(FreeIpaModelDescriptions.TELEMETRY)
+    private TelemetryRequest telemetry;
 
     public String getEnvironmentCrn() {
         return environmentCrn;
@@ -134,17 +138,27 @@ public class CreateFreeIpaRequest {
         this.gatewayPort = gatewayPort;
     }
 
+    public TelemetryRequest getTelemetry() {
+        return telemetry;
+    }
+
+    public void setTelemetry(TelemetryRequest telemetry) {
+        this.telemetry = telemetry;
+    }
+
     @Override
     public String toString() {
-        return "CreateFreeIpaRequest{"
-                + "environmentCrn='" + environmentCrn + '\''
-                + ", name='" + name + '\''
-                + ", placement=" + placement
-                + ", instanceGroups=" + instanceGroups
-                + ", authentication=" + authentication
-                + ", network=" + network
-                + ", image=" + image
-                + ", freeIpa=" + freeIpa
-                + '}';
+        return "CreateFreeIpaRequest{" +
+                "environmentCrn='" + environmentCrn + '\'' +
+                ", name='" + name + '\'' +
+                ", placement=" + placement +
+                ", instanceGroups=" + instanceGroups +
+                ", authentication=" + authentication +
+                ", network=" + network +
+                ", image=" + image +
+                ", freeIpa=" + freeIpa +
+                ", gatewayPort=" + gatewayPort +
+                ", telemetry=" + telemetry +
+                '}';
     }
 }

@@ -10,6 +10,8 @@ public class FreeIpaModelDescriptions {
     public static final String NETWORK = "freeipa stack related network";
     public static final String IMAGE_SETTINGS = "settings for custom images";
     public static final String FREEIPA_SERVER_SETTINGS = "settings for freeipa server";
+    public static final String TELEMETRY = "telemetry setting for freeipa server";
+    public static final String CLOUD_STORAGE = "cloud storage details for freeipa server";
     public static final String GATEWAY_PORT = "port of the gateway secured proxy";
     public static final String FREEIPA_APPLICATION_VERSION = "version of the application provisioned FreeIPA";
 

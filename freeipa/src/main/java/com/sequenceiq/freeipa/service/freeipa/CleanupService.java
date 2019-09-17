@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import com.sequenceiq.common.api.telemetry.model.Telemetry;
 import com.sequenceiq.freeipa.api.v1.freeipa.cleanup.CleanupRequest;
 import com.sequenceiq.freeipa.api.v1.freeipa.cleanup.CleanupResponse;
 import com.sequenceiq.freeipa.api.v1.kerberosmgmt.model.HostRequest;
@@ -28,6 +29,7 @@ import com.sequenceiq.freeipa.entity.FreeIpa;
 import com.sequenceiq.freeipa.entity.Stack;
 import com.sequenceiq.freeipa.kerberosmgmt.exception.DeleteException;
 import com.sequenceiq.freeipa.kerberosmgmt.v1.KerberosMgmtV1Controller;
+import com.sequenceiq.freeipa.service.AltusMachineUserService;
 import com.sequenceiq.freeipa.service.stack.StackService;
 
 @Service
@@ -47,6 +49,9 @@ public class CleanupService {
     @Inject
     private KerberosMgmtV1Controller kerberosMgmtV1Controller;
 
+    @Inject
+    private AltusMachineUserService altusMachineUserService;
+
     public CleanupResponse cleanup(String accountId, CleanupRequest request) throws FreeIpaClientException {
         Optional<Stack> optionalStack = stackService.findByEnvironmentCrnAndAccountId(request.getEnvironmentCrn(), accountId);
         CleanupResponse cleanupResponse = new CleanupResponse();
@@ -54,6 +59,7 @@ public class CleanupService {
             Stack stack = optionalStack.get();
             FreeIpa freeIpa = freeIpaService.findByStack(stack);
             FreeIpaClient client = freeIpaClientFactory.getFreeIpaClientForStack(stack);
+            cleanupMachineUser(stack);
             if (!CollectionUtils.isEmpty(request.getHosts())) {
                 revokeCerts(client, request, cleanupResponse);
                 removeHosts(client, request, cleanupResponse);
@@ -68,6 +74,15 @@ public class CleanupService {
             }
         }
         return cleanupResponse;
+    }
+
+    private void cleanupMachineUser(Stack stack) {
+        Telemetry telemetry = stack.getTelemetry();
+        if (telemetry != null && telemetry.getFeatures() != null
+                && telemetry.getFeatures().getReportDeploymentLogs() != null
+                && telemetry.getFeatures().getReportDeploymentLogs().isEnabled()) {
+            altusMachineUserService.cleanupMachineUser(stack);
+        }
     }
 
     private void revokeCerts(FreeIpaClient client, CleanupRequest request, CleanupResponse cleanupResponse) throws FreeIpaClientException {

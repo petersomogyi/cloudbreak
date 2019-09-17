@@ -6,6 +6,7 @@ import java.util.concurrent.Future;
 
 import javax.inject.Inject;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,9 @@ import com.sequenceiq.cloudbreak.cloud.event.platform.GetPlatformTemplateRequest
 import com.sequenceiq.cloudbreak.cloud.scheduler.PollGroup;
 import com.sequenceiq.cloudbreak.cloud.store.InMemoryStateStore;
 import com.sequenceiq.cloudbreak.common.service.TransactionService;
+import com.sequenceiq.cloudbreak.telemetry.fluent.FluentClusterType;
+import com.sequenceiq.cloudbreak.telemetry.fluent.cloud.CloudStorageFolderResolverService;
+import com.sequenceiq.common.api.telemetry.model.Telemetry;
 import com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.image.ImageSettingsRequest;
 import com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.instance.InstanceStatus;
 import com.sequenceiq.freeipa.api.v1.freeipa.stack.model.create.CreateFreeIpaRequest;
@@ -29,6 +33,7 @@ import com.sequenceiq.freeipa.controller.exception.BadRequestException;
 import com.sequenceiq.freeipa.converter.cloud.CredentialToCloudCredentialConverter;
 import com.sequenceiq.freeipa.converter.stack.CreateFreeIpaRequestToStackConverter;
 import com.sequenceiq.freeipa.converter.stack.StackToDescribeFreeIpaResponseConverter;
+import com.sequenceiq.freeipa.converter.telemetry.TelemetryConverter;
 import com.sequenceiq.freeipa.dto.Credential;
 import com.sequenceiq.freeipa.entity.FreeIpa;
 import com.sequenceiq.freeipa.entity.Image;
@@ -63,6 +68,9 @@ public class FreeIpaCreationService {
     private CreateFreeIpaRequestToStackConverter stackConverter;
 
     @Inject
+    private TelemetryConverter telemetryConverter;
+
+    @Inject
     private StackTemplateService templateService;
 
     @Inject
@@ -92,6 +100,9 @@ public class FreeIpaCreationService {
     @Inject
     private TransactionService transactionService;
 
+    @Inject
+    private CloudStorageFolderResolverService cloudStorageFolderResolverService;
+
     @Value("${info.app.version:}")
     private String appVersion;
 
@@ -101,6 +112,10 @@ public class FreeIpaCreationService {
         Credential credential = credentialService.getCredentialByEnvCrn(request.getEnvironmentCrn());
         Stack stack = stackConverter.convert(request, accountId, userFuture, credential.getCloudPlatform());
         stack.setResourceCrn(crnService.createCrn(accountId, Crn.ResourceType.FREEIPA));
+        if (request.getTelemetry() != null) {
+            Telemetry telemetry = telemetryConverter.convert(request.getTelemetry());
+            stack.setTelemetry(resolveCloudStorageFolder(telemetry, stack));
+        }
         stack.setAppVersion(appVersion);
         GetPlatformTemplateRequest getPlatformTemplateRequest = templateService.triggerGetTemplate(stack, credential);
 
@@ -143,5 +158,19 @@ public class FreeIpaCreationService {
                 instanceMetaData.setInstanceStatus(InstanceStatus.REQUESTED);
             }
         }
+    }
+
+    private Telemetry resolveCloudStorageFolder(Telemetry telemetry, Stack stack) {
+        try {
+            if (StringUtils.isNotBlank(stack.getName())
+                    && StringUtils.isNotBlank(stack.getResourceCrn())) {
+                cloudStorageFolderResolverService.updateStorageLocation(telemetry,
+                        FluentClusterType.FREEIPA.value(),
+                        stack.getName(), stack.getResourceCrn());
+            }
+        } catch (Exception e) {
+            LOGGER.info("Could not resolve folders in telemetry stack component.", e);
+        }
+        return telemetry;
     }
 }
