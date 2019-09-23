@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.sequenceiq.cloudbreak.api.CoreApi;
 import com.sequenceiq.cloudbreak.api.endpoint.autoscale.AutoscaleEndpoint;
+import com.sequenceiq.cloudbreak.api.endpoint.flow.FlowEndpoint;
 import com.sequenceiq.cloudbreak.api.endpoint.v1.AccountPreferencesEndpoint;
 import com.sequenceiq.cloudbreak.api.endpoint.v1.AuditEndpoint;
 import com.sequenceiq.cloudbreak.api.endpoint.v1.BlueprintEndpoint;
@@ -60,7 +61,6 @@ import com.sequenceiq.cloudbreak.api.endpoint.v3.ImageCatalogV3Endpoint;
 import com.sequenceiq.cloudbreak.api.endpoint.v3.KnoxServicesV3Endpoint;
 import com.sequenceiq.cloudbreak.api.endpoint.v3.LdapConfigV3Endpoint;
 import com.sequenceiq.cloudbreak.api.endpoint.v3.ManagementPackV3Endpoint;
-import com.sequenceiq.cloudbreak.api.endpoint.v3.WorkspaceV3Endpoint;
 import com.sequenceiq.cloudbreak.api.endpoint.v3.ProxyConfigV3Endpoint;
 import com.sequenceiq.cloudbreak.api.endpoint.v3.RdsConfigV3Endpoint;
 import com.sequenceiq.cloudbreak.api.endpoint.v3.RecipeV3Endpoint;
@@ -68,6 +68,7 @@ import com.sequenceiq.cloudbreak.api.endpoint.v3.SmartSenseSubscriptionV3Endpoin
 import com.sequenceiq.cloudbreak.api.endpoint.v3.StackV3Endpoint;
 import com.sequenceiq.cloudbreak.api.endpoint.v3.UserV3Endpoint;
 import com.sequenceiq.cloudbreak.api.endpoint.v3.UtilV3Endpoint;
+import com.sequenceiq.cloudbreak.api.endpoint.v3.WorkspaceV3Endpoint;
 
 import net.jodah.expiringmap.ExpirationPolicy;
 import net.jodah.expiringmap.ExpiringMap;
@@ -114,7 +115,8 @@ public class CloudbreakClient {
             SubscriptionEndpoint.class,
             UserEndpoint.class,
             UserV3Endpoint.class,
-            UtilEndpoint.class
+            UtilEndpoint.class,
+            FlowEndpoint.class
     );
 
     private static final Form EMPTY_FORM = new Form();
@@ -330,6 +332,10 @@ public class CloudbreakClient {
 
     public UtilV3Endpoint utilV3Endpoint() {
         return getEndpoint(UtilV3Endpoint.class);
+    }
+
+    public FlowEndpoint flowEndpoint() {
+        return getEndpoint(FlowEndpoint.class);
     }
 
     protected <E> E getEndpoint(Class<E> clazz) {

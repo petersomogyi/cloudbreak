@@ -37,6 +37,7 @@ import com.sequenceiq.cloudbreak.repository.workspace.UserRepository;
 import com.sequenceiq.cloudbreak.security.StackServiceSecurityComponentTest.TestConfig;
 import com.sequenceiq.cloudbreak.service.Clock;
 import com.sequenceiq.cloudbreak.service.ComponentConfigProvider;
+import com.sequenceiq.cloudbreak.service.RestRequestThreadLocalService;
 import com.sequenceiq.cloudbreak.service.StackUpdater;
 import com.sequenceiq.cloudbreak.service.TlsSecurityService;
 import com.sequenceiq.cloudbreak.service.TransactionService;
@@ -67,6 +68,9 @@ public class StackServiceSecurityComponentTest extends SecurityComponentTestBase
 
     @Inject
     private StackStatusRepository stackStatusRepository;
+
+    @Inject
+    private RestRequestThreadLocalService restRequestThreadLocalService;
 
     @Inject
     private HasPermissionAspectForMockitoTest hasPermissionAspectForMockitoTest;
@@ -202,6 +206,9 @@ public class StackServiceSecurityComponentTest extends SecurityComponentTestBase
 
         @MockBean
         private WorkspaceService workspaceService;
+
+        @MockBean
+        private RestRequestThreadLocalService restRequestThreadLocalService;
 
         @Bean
         public StackRepository stackRepository() {

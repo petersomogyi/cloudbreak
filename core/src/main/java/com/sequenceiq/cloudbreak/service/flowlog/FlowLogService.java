@@ -1,5 +1,7 @@
 package com.sequenceiq.cloudbreak.service.flowlog;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.cedarsoftware.util.io.JsonWriter;
 import com.sequenceiq.cloudbreak.cloud.event.Payload;
 import com.sequenceiq.cloudbreak.cloud.event.Selectable;
+import com.sequenceiq.cloudbreak.controller.exception.NotFoundException;
 import com.sequenceiq.cloudbreak.core.flow2.FlowState;
 import com.sequenceiq.cloudbreak.domain.FlowChainLog;
 import com.sequenceiq.cloudbreak.domain.FlowLog;
@@ -44,6 +47,9 @@ public class FlowLogService {
 
     @Inject
     private TransactionService transactionService;
+
+    @Inject
+    private ResourceIdProvider resourceIdProvider;
 
     public FlowLog save(String flowId, String flowChanId, String key, Payload payload, Map<Object, Object> variables, Class<?> flowType,
             FlowState currentState) {
@@ -117,5 +123,31 @@ public class FlowLogService {
 
     public FlowLog getLastFlowLog(String flowId) {
         return flowLogRepository.findFirstByFlowIdOrderByCreatedDesc(flowId);
+    }
+
+    public List<FlowLog> findAllByFlowIdOrderByCreatedDesc(String flowId) {
+        return flowLogRepository.findAllByFlowIdOrderByCreatedDesc(flowId);
+    }
+
+    public List<FlowLog> findAllByResourceIdOrderByCreatedDesc(Long id) {
+        return flowLogRepository.findAllByStackIdOrderByCreatedDesc(id);
+    }
+
+    public FlowLog getLastFlowLogByResourcerName(String resourceName) {
+        Long resourceId = resourceIdProvider.getResourceIdByResourceName(resourceName);
+        Iterator<FlowLog> iterator = findAllByResourceIdOrderByCreatedDesc(resourceId).iterator();
+        if (iterator.hasNext()) {
+            return iterator.next();
+        }
+        throw new NotFoundException("Flow log for resource not found!");
+    }
+
+    public List<FlowLog> getFlowLogsByResourceName(String resourceName) {
+        Long resourceId = resourceIdProvider.getResourceIdByResourceName(resourceName);
+        return findAllByResourceIdOrderByCreatedDesc(resourceId);
+    }
+
+    public List<FlowLog> getFlowLogsByResourceId(Long resourceId) {
+        return findAllByResourceIdOrderByCreatedDesc(resourceId);
     }
 }

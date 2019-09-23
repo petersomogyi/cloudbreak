@@ -25,6 +25,7 @@ import com.sequenceiq.periscope.monitor.evaluator.EventPublisher;
 import com.sequenceiq.periscope.monitor.executor.EvaluatorExecutorRegistry;
 import com.sequenceiq.periscope.monitor.executor.ExecutorServiceWithRegistry;
 import com.sequenceiq.periscope.monitor.executor.LoggedExecutorService;
+import com.sequenceiq.periscope.monitor.handler.CloudbreakCommunicator;
 import com.sequenceiq.periscope.monitor.handler.PersistRejectedThreadExecutionHandler;
 import com.sequenceiq.periscope.service.AmbariClientProvider;
 import com.sequenceiq.periscope.service.ClusterService;
@@ -52,7 +53,8 @@ public class RejectedThreadContext {
                             ExecutorServiceWithRegistry.class,
                             EvaluatorExecutorRegistry.class,
                             LoggedExecutorService.class,
-                            Clock.class
+                            Clock.class,
+                            CloudbreakCommunicator.class
                     })
     )
     @MockBean({ClusterService.class, AmbariClientProvider.class, CloudbreakClientConfiguration.class, MetricUtils.class, LoggerUtils.class})

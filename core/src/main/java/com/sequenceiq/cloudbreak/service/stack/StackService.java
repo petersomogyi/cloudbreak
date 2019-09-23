@@ -87,6 +87,7 @@ import com.sequenceiq.cloudbreak.repository.StackStatusRepository;
 import com.sequenceiq.cloudbreak.repository.StackViewRepository;
 import com.sequenceiq.cloudbreak.service.CloudbreakException;
 import com.sequenceiq.cloudbreak.service.ComponentConfigProvider;
+import com.sequenceiq.cloudbreak.service.RestRequestThreadLocalService;
 import com.sequenceiq.cloudbreak.service.StackUpdater;
 import com.sequenceiq.cloudbreak.service.TlsSecurityService;
 import com.sequenceiq.cloudbreak.service.TransactionService;
@@ -96,6 +97,7 @@ import com.sequenceiq.cloudbreak.service.cluster.ClusterService;
 import com.sequenceiq.cloudbreak.service.credential.OpenSshPublicKeyValidator;
 import com.sequenceiq.cloudbreak.service.decorator.StackResponseDecorator;
 import com.sequenceiq.cloudbreak.service.events.CloudbreakEventService;
+import com.sequenceiq.cloudbreak.service.flowlog.ResourceIdProvider;
 import com.sequenceiq.cloudbreak.service.image.ImageService;
 import com.sequenceiq.cloudbreak.service.image.StatedImage;
 import com.sequenceiq.cloudbreak.service.messages.CloudbreakMessagesService;
@@ -105,7 +107,7 @@ import com.sequenceiq.cloudbreak.service.workspace.WorkspaceService;
 import com.sequenceiq.cloudbreak.util.PasswordUtil;
 
 @Service
-public class StackService {
+public class StackService implements ResourceIdProvider {
 
     private static final String SSH_USER_CB = "cloudbreak";
 
@@ -202,6 +204,9 @@ public class StackService {
 
     @Inject
     private PermissionCheckingUtils permissionCheckingUtils;
+
+    @Inject
+    private RestRequestThreadLocalService restRequestThreadLocalService;
 
     public Long countByAccount(String account) {
         return stackRepository.countActiveByAccount(account);
@@ -975,6 +980,17 @@ public class StackService {
 
     public Stack getForCluster(Long id) {
         return stackRepository.findStackForCluster(id);
+    }
+
+    @Override
+    public Long getResourceIdByResourceName(String resourceName) {
+        User user = userService.getOrCreate(restRequestThreadLocalService.getCloudbreakUser());
+        Workspace workspace = workspaceService.getDefaultWorkspaceForUser(user);
+        Stack stackByNameAndWorkspaceId = findStackByNameAndWorkspaceId(resourceName, workspace.getId());
+        if (stackByNameAndWorkspaceId != null) {
+            return stackByNameAndWorkspaceId.getId();
+        }
+        throw new NotFoundException(String.format("Not found stack in the current workspace with name %s", resourceName));
     }
 
     public void updateImage(Long stackId, Long workspaceId, String imageId, String imageCatalogName, String imageCatalogUrl, User user) {

@@ -14,16 +14,15 @@ import org.springframework.stereotype.Component;
 
 import com.sequenceiq.ambari.client.AmbariClient;
 import com.sequenceiq.cloudbreak.api.model.FailureReport;
-import com.sequenceiq.cloudbreak.client.CloudbreakClient;
 import com.sequenceiq.periscope.aspects.AmbariRequestLogging;
 import com.sequenceiq.periscope.domain.Cluster;
 import com.sequenceiq.periscope.log.MDCBuilder;
 import com.sequenceiq.periscope.monitor.context.ClusterIdEvaluatorContext;
 import com.sequenceiq.periscope.monitor.context.EvaluatorContext;
 import com.sequenceiq.periscope.monitor.event.UpdateFailedEvent;
+import com.sequenceiq.periscope.monitor.handler.CloudbreakCommunicator;
 import com.sequenceiq.periscope.service.AmbariClientProvider;
 import com.sequenceiq.periscope.service.ClusterService;
-import com.sequenceiq.periscope.service.configuration.CloudbreakClientConfiguration;
 
 @Component("AmbariAgentHealthEvaluator")
 @Scope("prototype")
@@ -52,7 +51,7 @@ public class AmbariAgentHealthEvaluator extends EvaluatorExecutor {
     private AmbariClientProvider ambariClientProvider;
 
     @Inject
-    private CloudbreakClientConfiguration cloudbreakClientConfiguration;
+    private CloudbreakCommunicator cloudbreakCommunicator;
 
     @Inject
     private AmbariRequestLogging ambariRequestLogging;
@@ -99,10 +98,9 @@ public class AmbariAgentHealthEvaluator extends EvaluatorExecutor {
                 }
                 if (!hostNamesToRecover.isEmpty()) {
                     hostNamesToRecover.forEach(hn -> LOGGER.info("Host to recover: {}", hn));
-                    CloudbreakClient cbClient = cloudbreakClientConfiguration.cloudbreakClient();
                     FailureReport failureReport = new FailureReport();
                     failureReport.setFailedNodes(hostNamesToRecover);
-                    cbClient.autoscaleEndpoint().failureReport(cluster.getStackId(), failureReport);
+                    cloudbreakCommunicator.failureReport(cluster.getStackId(), failureReport);
                 }
             }
         } catch (Exception e) {

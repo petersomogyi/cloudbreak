@@ -14,9 +14,9 @@ import org.mockito.MockitoAnnotations;
 import com.sequenceiq.periscope.monitor.context.ClusterIdEvaluatorContext;
 import com.sequenceiq.periscope.monitor.event.UpdateFailedEvent;
 import com.sequenceiq.periscope.monitor.executor.ExecutorServiceWithRegistry;
+import com.sequenceiq.periscope.monitor.handler.CloudbreakCommunicator;
 import com.sequenceiq.periscope.service.AmbariClientProvider;
 import com.sequenceiq.periscope.service.ClusterService;
-import com.sequenceiq.periscope.service.configuration.CloudbreakClientConfiguration;
 
 public class AmbariAgentHealthEvaluatorTest {
 
@@ -32,7 +32,7 @@ public class AmbariAgentHealthEvaluatorTest {
     private AmbariClientProvider ambariClientProvider;
 
     @Mock
-    private CloudbreakClientConfiguration cloudbreakClientConfiguration;
+    private CloudbreakCommunicator cloudbreakCommunicator;
 
     @Mock
     private EventPublisher eventPublisher;

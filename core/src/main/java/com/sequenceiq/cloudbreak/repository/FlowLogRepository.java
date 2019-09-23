@@ -56,4 +56,6 @@ public interface FlowLogRepository extends DisabledBaseRepository<FlowLog, Long>
     void updateLastLogStatusInFlow(@Param("id") Long id, @Param("stateStatus") StateStatus stateStatus);
 
     List<FlowLog> findAllByStackIdOrderByCreatedDesc(Long stackId);
+
+    List<FlowLog> findAllByFlowIdOrderByCreatedDesc(String flowId);
 }

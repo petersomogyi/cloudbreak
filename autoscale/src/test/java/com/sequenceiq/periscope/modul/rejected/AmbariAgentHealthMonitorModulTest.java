@@ -4,6 +4,7 @@ import static com.sequenceiq.periscope.utils.DelayedAnswer.delayed;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -39,8 +40,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.TestContextManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.google.common.collect.Lists;
 import com.sequenceiq.ambari.client.AmbariClient;
 import com.sequenceiq.cloudbreak.api.endpoint.autoscale.AutoscaleEndpoint;
+import com.sequenceiq.cloudbreak.api.endpoint.flow.FlowEndpoint;
 import com.sequenceiq.cloudbreak.api.model.FailureReport;
 import com.sequenceiq.cloudbreak.client.CloudbreakClient;
 import com.sequenceiq.cloudbreak.util.JsonUtil;
@@ -52,6 +55,7 @@ import com.sequenceiq.periscope.modul.rejected.RejectedThreadContext.SpringConfi
 import com.sequenceiq.periscope.monitor.AmbariAgentHealthMonitor;
 import com.sequenceiq.periscope.monitor.MonitorContext;
 import com.sequenceiq.periscope.monitor.executor.ExecutorServiceWithRegistry;
+import com.sequenceiq.periscope.monitor.handler.CloudbreakCommunicator;
 import com.sequenceiq.periscope.service.AmbariClientProvider;
 import com.sequenceiq.periscope.service.ClusterService;
 import com.sequenceiq.periscope.service.RejectedThreadService;
@@ -72,6 +76,9 @@ public class AmbariAgentHealthMonitorModulTest extends RejectedThreadContext {
 
     @Inject
     private AmbariClientProvider ambariClientProvider;
+
+    @Inject
+    private CloudbreakCommunicator cloudbreakCommunicator;
 
     @Inject
     private CloudbreakClientConfiguration cloudbreakClientConfiguration;
@@ -114,6 +121,7 @@ public class AmbariAgentHealthMonitorModulTest extends RejectedThreadContext {
     @Test
     public void testWhenHeartBeatCritical() {
         AutoscaleEndpoint autoscaleEndpoint = mock(AutoscaleEndpoint.class);
+        FlowEndpoint flowEndpoint = mock(FlowEndpoint.class);
         Cluster cluster = new Cluster();
         long clusterId = 1L;
         long stackId = 0L;
@@ -124,6 +132,8 @@ public class AmbariAgentHealthMonitorModulTest extends RejectedThreadContext {
         when(jobDetail.getKey()).thenReturn(JobKey.jobKey("test-heart-beat-critical"));
         when(clusterService.findById(clusterId)).thenReturn(cluster);
         when(cloudbreakClient.autoscaleEndpoint()).thenReturn(autoscaleEndpoint);
+        when(cloudbreakClient.flowEndpoint()).thenReturn(flowEndpoint);
+        when(flowEndpoint.getFlowLogsByResourceId(anyLong())).thenReturn(Lists.newArrayList());
 
         Map<String, Object> map = new HashMap<>();
         map.put("state", "CRITICAL");
@@ -137,6 +147,7 @@ public class AmbariAgentHealthMonitorModulTest extends RejectedThreadContext {
         waitForTasksToFinish();
 
         verify(autoscaleEndpoint, times(1)).failureReport(eq(stackId), any(FailureReport.class));
+        verify(flowEndpoint, times(1)).getFlowLogsByResourceId(eq(stackId));
     }
 
     @Test
