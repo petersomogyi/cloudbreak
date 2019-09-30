@@ -1,17 +1,10 @@
 package com.sequenceiq.freeipa.client;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.security.Security;
-import java.util.List;
-import java.util.Map;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-
+import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
+import com.sequenceiq.cloudbreak.client.HttpClientConfig;
+import com.sequenceiq.freeipa.client.auth.InvalidPasswordException;
+import com.sequenceiq.freeipa.client.auth.InvalidUserOrRealmException;
+import com.sequenceiq.freeipa.client.auth.PasswordExpiredException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.client.CookieStore;
@@ -36,11 +29,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
-import com.sequenceiq.cloudbreak.client.HttpClientConfig;
-import com.sequenceiq.freeipa.client.auth.InvalidPasswordException;
-import com.sequenceiq.freeipa.client.auth.InvalidUserOrRealmException;
-import com.sequenceiq.freeipa.client.auth.PasswordExpiredException;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.security.Security;
+import java.util.List;
+import java.util.Map;
 
 public class FreeIpaClientBuilder {
 
@@ -76,33 +74,49 @@ public class FreeIpaClientBuilder {
         this.realm = realm;
         this.clientConfig = clientConfig;
         this.port = port;
-        sslContext = setupSSLContext(clientConfig.getClientCert(), clientConfig.getClientKey(), clientConfig.getServerCert());
-        RegistryBuilder<ConnectionSocketFactory> registryBuilder = RegistryBuilder.create();
-        SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(sslContext, hostnameVerifier());
-        registryBuilder.register("https", socketFactory);
-        Registry<ConnectionSocketFactory> registry = registryBuilder.build();
-        connectionManager = new PoolingHttpClientConnectionManager(registry);
+
+        if (clientConfig.hasSSLConfigs()) {
+            this.sslContext =
+                setupSSLContext(clientConfig.getClientCert(), clientConfig.getClientKey(), clientConfig.getServerCert());
+            RegistryBuilder<ConnectionSocketFactory> registryBuilder = RegistryBuilder.create();
+            SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(sslContext, hostnameVerifier());
+            registryBuilder.register("https", socketFactory);
+            Registry<ConnectionSocketFactory> registry = registryBuilder.build();
+            connectionManager = new PoolingHttpClientConnectionManager(registry);
+        } else {
+            this.sslContext = null;
+            connectionManager = new PoolingHttpClientConnectionManager();
+        }
+
         connectionManager.setMaxTotal(CONNECTION_POOL_MAX);
         connectionManager.setDefaultMaxPerRoute(CONNECTION_POOL_MAX_PER_ROOT);
     }
 
-    public FreeIpaClientBuilder(String user, String pass, String realm, HttpClientConfig clientConfig, String port, String basePath) throws Exception {
+    public FreeIpaClientBuilder(String user, String pass, String realm,
+                                HttpClientConfig clientConfig, String port,
+                                String basePath) throws Exception {
         this(user, pass, realm, clientConfig, port);
         this.basePath = basePath;
     }
 
     public FreeIpaClient build() throws URISyntaxException, FreeIpaClientException, IOException {
-        String sessionCookie = connect(user, pass, sslContext, clientConfig.getApiAddress(), port);
+        String sessionCookie = connect(user, pass, clientConfig.getApiAddress(), port);
         JsonRpcHttpClient jsonRpcHttpClient = new JsonRpcHttpClient(ObjectMapperBuilder.getObjectMapper(),
                 getIpaUrl(clientConfig.getApiAddress(), port, basePath, "/session/json"),
-                Map.of("Cookie", "ipa_session=" + sessionCookie));
-        jsonRpcHttpClient.setSslContext(sslContext);
+                Map.of(
+                    "Cookie", "ipa_session=" + sessionCookie,
+                    // TODO: This is temporary hack. Once we can register cluster proxy endpoint
+                    //       with mTLS (CDPAM-256), this should be removed.
+                    "Proxy-Ignore-Auth", "true"));
+        if (sslContext != null) {
+            jsonRpcHttpClient.setSslContext(sslContext);
+        }
         jsonRpcHttpClient.setHostNameVerifier(hostnameVerifier());
         jsonRpcHttpClient.setReadTimeoutMillis(READ_TIMEOUT_MILLIS);
         return new FreeIpaClient(jsonRpcHttpClient);
     }
 
-    private String connect(String user, String pass, SSLContext sslContext, String apiAddress, String port)
+    private String connect(String user, String pass, String apiAddress, String port)
             throws IOException, URISyntaxException, FreeIpaClientException {
 
         URI target = getIpaUrl(apiAddress, port, basePath, "/session/login_password").toURI();
@@ -161,9 +175,10 @@ public class FreeIpaClientBuilder {
     }
 
     private URL getIpaUrl(String apiAddress, String port, String basePath, String context) throws MalformedURLException {
+        String scheme = clientConfig.hasSSLConfigs() ? "https://" : "http://";
         String path = StringUtils.isBlank(basePath) ? "" : basePath;
         path += context;
-        return new URL("https://" + apiAddress + ':' + port + path);
+        return new URL(scheme + apiAddress + ':' + port + path);
     }
 
     private HttpPost getPost(URI target) {
