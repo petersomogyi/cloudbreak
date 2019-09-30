@@ -517,6 +517,27 @@ public class GrpcUmsClient {
         }
     }
 
+    public String setVirtualGroupName(String actorCrn, String accountId, Optional<String> requestId, String right, String resource) {
+        try (ManagedChannelWrapper channelWrapper = makeWrapper()) {
+            UmsClient client = makeClient(channelWrapper.getChannel(), actorCrn);
+            return client.setWorkloadAdministrationGroupName(requestId.orElse(UUID.randomUUID().toString()), accountId, right, resource).getWorkloadAdministrationGroupName();
+        }
+    }
+
+    public String getVirtualGroupName(String actorCrn, String accountId, Optional<String> requestId, String right, String resource) {
+        try (ManagedChannelWrapper channelWrapper = makeWrapper()) {
+            UmsClient client = makeClient(channelWrapper.getChannel(), actorCrn);
+            return client.getWorkloadAdministrationGroupName(requestId.orElse(UUID.randomUUID().toString()), accountId, right, resource).getWorkloadAdministrationGroupName();
+        }
+    }
+
+    public void deleteVirtualGroupName(String actorCrn, String accountId, Optional<String> requestId, String right, String resource) {
+        try (ManagedChannelWrapper channelWrapper = makeWrapper()) {
+            UmsClient client = makeClient(channelWrapper.getChannel(), actorCrn);
+            client.deleteWorkloadAdministrationGroupName(requestId.orElse(UUID.randomUUID().toString()), accountId, right, resource);
+        }
+    }
+
     /**
      * Get built-in Dbus uploader role
      * Partition and region is hard coded right now, if it will change use the same as the user crn
