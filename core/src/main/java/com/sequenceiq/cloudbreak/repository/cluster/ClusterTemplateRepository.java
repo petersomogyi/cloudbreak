@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import com.sequenceiq.authorization.resource.AuthorizationResource;
 import com.sequenceiq.authorization.resource.AuthorizationResourceType;
 import com.sequenceiq.cloudbreak.domain.stack.cluster.ClusterTemplate;
+import com.sequenceiq.cloudbreak.domain.stack.cluster.ClusterTemplateId;
 import com.sequenceiq.cloudbreak.workspace.repository.DisableHasPermission;
 import com.sequenceiq.cloudbreak.workspace.repository.EntityType;
 import com.sequenceiq.cloudbreak.workspace.repository.check.CheckPermissionsByReturnValue;
@@ -38,4 +39,9 @@ public interface ClusterTemplateRepository extends WorkspaceResourceRepository<C
     @Query("SELECT c FROM ClusterTemplate c WHERE c.resourceCrn= :crn AND c.workspace.id= :workspaceId AND c.status <> 'DEFAULT_DELETED'")
     @CheckPermissionsByReturnValue
     Optional<ClusterTemplate> getByCrnForWorkspaceId(@Param("crn") String crn, @Param("workspaceId") Long workspaceId);
+
+    @Query("SELECT c.id as id, c.name as name FROM ClusterTemplate c WHERE c.stackTemplate.environmentCrn= :environmentCrn AND c.status <> 'DEFAULT_DELETED'")
+    @CheckPermissionsByReturnValue
+    Set<ClusterTemplateId> getAllByEnvironmentCrn(@Param("environmentCrn") String environmentCrn);
+
 }

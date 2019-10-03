@@ -6,6 +6,7 @@ import static com.sequenceiq.cloudbreak.doc.Notes.CLUSTER_TEMPLATE_NOTES;
 import java.util.Set;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -77,4 +78,12 @@ public interface ClusterTemplateV4Endpoint {
     @ApiOperation(value = ClusterTemplateOpDescription.DELETE_MULTIPLE_BY_NAME_IN_WORKSPACE, produces = JSON, notes = CLUSTER_TEMPLATE_NOTES,
             nickname = "deleteClusterTemplatesInWorkspace")
     ClusterTemplateV4Responses deleteMultiple(@PathParam("workspaceId") Long workspaceId, Set<String> names);
+
+    @DELETE
+    @Path("environment/crn/{crn}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = ClusterTemplateOpDescription.DELETE_BY_ENVIRONMENT_CRN, produces = JSON, notes = CLUSTER_TEMPLATE_NOTES,
+            nickname = "deleteClusterTemplatesByEnvironmentCrn")
+    void deleteMultipleByEnvironmentCrn(@PathParam("workspaceId") Long workspaceId, @NotNull @PathParam("crn") String environmentCrn);
+
 }
