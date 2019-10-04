@@ -189,6 +189,10 @@ public class StackV4RequestToStackConverter extends AbstractConversionServiceAwa
                 }
             });
         }
+        // Host names shall be prefixed with stack name if not configured othervise
+        if (stack.getCustomHostname() == null) {
+            stack.setCustomHostname(stack.getName());
+        }
     }
 
     private com.sequenceiq.cloudbreak.domain.stack.Component getTelemetryComponent(Stack stack, StackV4Request source) {
