@@ -562,8 +562,12 @@ public class ImageCatalogService extends AbstractWorkspaceAwareResourceService<I
 
     private Optional<Image> getLatestImageDefaultPreferred(List<Image> images) {
         List<Image> defaultImages = images.stream().filter(Image::isDefaultImage).collect(Collectors.toList());
-        return defaultImages.isEmpty() ? images.stream().max(Comparator.comparing(Image::getDate))
-                : defaultImages.stream().max(Comparator.comparing(Image::getDate));
+        return defaultImages.isEmpty() ? images.stream().max(getImageComparing(images)) : defaultImages.stream().max(getImageComparing(defaultImages));
+    }
+
+    private Comparator<Image> getImageComparing(List<Image> images) {
+        return images.stream().anyMatch(image -> image.getCreated() == null)? Comparator.comparing(Image::getDate)
+                : Comparator.comparing(Image::getCreated);
     }
 
     private List<Image> getImagesForClusterType(StatedImages statedImages, String clusterType) {
