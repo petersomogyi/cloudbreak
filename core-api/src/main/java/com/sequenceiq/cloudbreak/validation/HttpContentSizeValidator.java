@@ -6,6 +6,8 @@ import javax.ws.rs.core.Response.Status.Family;
 import javax.ws.rs.core.Response.StatusType;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sequenceiq.cloudbreak.api.helper.HttpHelper;
 
@@ -20,6 +22,8 @@ public class HttpContentSizeValidator implements ConstraintValidator<ValidHttpCo
     public static final String INVALID_URL_MSG = "The value should be a valid URL and start with 'http(s)'!";
 
     public static final String FAILED_TO_GET_WITH_EXCEPTION = "Failed to get response by the specified URL!";
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpContentSizeValidator.class);
 
     private HttpHelper httpHelper = HttpHelper.getInstance();
 
@@ -44,6 +48,7 @@ public class HttpContentSizeValidator implements ConstraintValidator<ValidHttpCo
             }
             return contentLength.getValue() > 0 && contentLength.getValue() <= MAX_IN_BYTES;
         } catch (Throwable throwable) {
+            LOGGER.info("content size validation failed.", throwable);
             context.buildConstraintViolationWithTemplate(FAILED_TO_GET_WITH_EXCEPTION).addConstraintViolation();
         }
         return false;
