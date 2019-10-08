@@ -38,29 +38,23 @@ public class ImageCatalogMockServerSetup implements AutoCloseable {
 
     public void configureImgCatalogMock() {
         sparkServer = sparkServerFactory.construct();
-        startImageCatalog();
-        startFreeIpaImageCatalog();
-        startPreWarmedImageCatalog();
+        String jsonPreparedICResponse = patchCbVersion(responseFromJsonFile("imagecatalog/catalog.json"), testParameter);
+        String jsonFreeIPACatalogResponse = responseFromJsonFile("imagecatalog/freeipa.json");
+        String jsonPreparedPrewarmICResponse = patchCbVersion(responseFromJsonFile("imagecatalog/catalog-with-prewarmed.json"), testParameter);
+
+        startImageCatalog(IMAGE_CATALOG, jsonPreparedICResponse);
+        startImageCatalog(FREEIPA_IMAGE_CATALOG, jsonFreeIPACatalogResponse);
+        startImageCatalog(IMAGE_CATALOG_PREWARMED, jsonPreparedPrewarmICResponse);
     }
 
-    public void startImageCatalog() {
-        String jsonCatalogResponse = responseFromJsonFile("imagecatalog/catalog.json");
-        sparkServer.getSparkService().get(IMAGE_CATALOG, (request, response) -> patchCbVersion(jsonCatalogResponse, testParameter));
-        sparkServer.getSparkService().head(IMAGE_CATALOG, (request, response) -> {
-            response.header("Content-Length", String.valueOf(patchCbVersion(jsonCatalogResponse, testParameter).length()));
+    public void startImageCatalog(String url, String imageCatalogText) {
+        sparkServer.getSparkService().get(url, (request, response) -> imageCatalogText);
+        sparkServer.getSparkService().head(url, (request, response) -> {
+            LOGGER.info("IC head was called at: {}", url);
+            response.header("Content-Length", String.valueOf(imageCatalogText.length()));
             return "";
         });
-        LOGGER.info("ImageCatalog has started at: {}", sparkServer.getEndpoint() + IMAGE_CATALOG);
-    }
-
-    public void startFreeIpaImageCatalog() {
-        String jsonCatalogResponse = responseFromJsonFile("imagecatalog/freeipa.json");
-        sparkServer.getSparkService().get(FREEIPA_IMAGE_CATALOG, (request, response) -> jsonCatalogResponse);
-        sparkServer.getSparkService().head(FREEIPA_IMAGE_CATALOG, (request, response) -> {
-            response.header("Content-Length", String.valueOf(jsonCatalogResponse.length()));
-            return "";
-        });
-        LOGGER.info("FreeIPA ImageCatalog has started at: {}", sparkServer.getEndpoint() + FREEIPA_IMAGE_CATALOG);
+        LOGGER.info("ImageCatalog has started at: {}", sparkServer.getEndpoint() + url);
     }
 
     public String getFreeIpaImageCatalogUrl() {
@@ -73,19 +67,6 @@ public class ImageCatalogMockServerSetup implements AutoCloseable {
 
     public String getPreWarmedImageCatalogUrl() {
         return String.join("", sparkServer.getEndpoint(), IMAGE_CATALOG_PREWARMED);
-    }
-
-    public void startPreWarmedImageCatalog() {
-        String jsonCatalogResponse = responseFromJsonFile("imagecatalog/catalog-with-prewarmed.json");
-        sparkServer.getSparkService().get(IMAGE_CATALOG_PREWARMED, (request, response) -> patchCbVersion(jsonCatalogResponse, testParameter));
-        sparkServer.getSparkService().head(IMAGE_CATALOG_PREWARMED, (request, response) -> {
-            LOGGER.info("Prewarmed IC head was called");
-            String length = String.valueOf(patchCbVersion(jsonCatalogResponse, testParameter).length());
-            response.header("Content-Length", length);
-            LOGGER.info("Prewarmed IC lenght: {} ", length);
-            return "";
-        });
-        LOGGER.info("Prewarmed ImageCatalog has started at: {}", sparkServer.getEndpoint() + IMAGE_CATALOG_PREWARMED);
     }
 
     public String patchCbVersion(String catalogJson, TestParameter testParameter) {
