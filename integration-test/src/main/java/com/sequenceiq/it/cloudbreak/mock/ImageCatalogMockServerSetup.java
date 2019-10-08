@@ -50,7 +50,7 @@ public class ImageCatalogMockServerSetup implements AutoCloseable {
     public void startImageCatalog(String url, String imageCatalogText) {
         sparkServer.getSparkService().get(url, (request, response) -> imageCatalogText);
         sparkServer.getSparkService().head(url, (request, response) -> {
-            LOGGER.info("IC head was called at: {}", url);
+            LOGGER.info("IC head was called at: {}, {}", url, request.url());
             response.header("Content-Length", String.valueOf(imageCatalogText.length()));
             return "";
         });
