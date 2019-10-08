@@ -82,7 +82,7 @@ public class ImageCatalogMockServerSetup implements AutoCloseable {
             LOGGER.info("Prewarmed IC head was called");
             String length = String.valueOf(patchCbVersion(jsonCatalogResponse, testParameter).length());
             response.header("Content-Length", length);
-            LOGGER.info("Prewarmed IC lenght: {}", length);
+            LOGGER.info("Prewarmed IC lenght: {} ", length);
             return "";
         });
         LOGGER.info("Prewarmed ImageCatalog has started at: {}", sparkServer.getEndpoint() + IMAGE_CATALOG_PREWARMED);
