@@ -33,6 +33,7 @@ public class HttpContentSizeValidator implements ConstraintValidator<ValidHttpCo
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
+        LOGGER.info("content size validation was called. Value: {}", value);
         if (value == null) {
             return true;
         } else if (!value.startsWith("http")) {
