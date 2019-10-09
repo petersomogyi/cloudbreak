@@ -94,7 +94,7 @@ public class ServiceEndpointCollectorTest {
     @Before
     public void setup() {
         when(exposedServiceListValidator.validate(any())).thenReturn(ValidationResult.builder().build());
-        ReflectionTestUtils.setField(underTest, "knoxPort", "8443");
+        ReflectionTestUtils.setField(underTest, "knoxPort", "443");
     }
 
     @Test
@@ -139,7 +139,7 @@ public class ServiceEndpointCollectorTest {
                 new ExposedService[]{HIVE_SERVER}, GatewayType.INDIVIDUAL);
 
         String result = underTest.getManagerServerUrl(cluster, CLOUDERA_MANAGER_IP);
-        assertEquals("https://127.0.0.1:8443/gateway-path/topology1/cmf/home/", result);
+        assertEquals("https://127.0.0.1:443/gateway-path/topology1/cmf/home/", result);
     }
 
     @Test
@@ -160,7 +160,7 @@ public class ServiceEndpointCollectorTest {
                 topology2ClusterExposedServiceV4Responses.stream().filter(service -> "WEBHDFS".equals(service.getKnoxService())).findFirst();
 
         if (webHDFS.isPresent()) {
-            assertEquals("https://10.0.0.1:8443/gateway-path/topology2/webhdfs/v1", webHDFS.get().getServiceUrl());
+            assertEquals("https://10.0.0.1:443/gateway-path/topology2/webhdfs/v1", webHDFS.get().getServiceUrl());
             assertEquals("WEBHDFS", webHDFS.get().getKnoxService());
             assertEquals("WebHDFS", webHDFS.get().getDisplayName());
             assertEquals("NAMENODE", webHDFS.get().getServiceName());
@@ -170,7 +170,7 @@ public class ServiceEndpointCollectorTest {
         Optional<ClusterExposedServiceV4Response> sparkHistoryUI =
                 topology2ClusterExposedServiceV4Responses.stream().filter(service -> "SPARKHISTORYUI".equals(service.getKnoxService())).findFirst();
         if (sparkHistoryUI.isPresent()) {
-            assertEquals("https://10.0.0.1:8443/gateway-path/topology2/sparkhistory/", sparkHistoryUI.get().getServiceUrl());
+            assertEquals("https://10.0.0.1:443/gateway-path/topology2/sparkhistory/", sparkHistoryUI.get().getServiceUrl());
             assertEquals("SPARKHISTORYUI", sparkHistoryUI.get().getKnoxService());
             assertEquals("Spark 1.x History Server", sparkHistoryUI.get().getDisplayName());
             assertEquals("SPARK_YARN_HISTORY_SERVER", sparkHistoryUI.get().getServiceName());
@@ -180,7 +180,7 @@ public class ServiceEndpointCollectorTest {
         Optional<ClusterExposedServiceV4Response> hiveServer =
                 topology2ClusterExposedServiceV4Responses.stream().filter(service -> "HIVE".equals(service.getKnoxService())).findFirst();
         if (hiveServer.isPresent()) {
-            assertEquals("jdbc:hive2://10.0.0.1:8443/;ssl=true;sslTrustStore=/cert/gateway.jks;trustStorePassword=${GATEWAY_JKS_PASSWORD};"
+            assertEquals("jdbc:hive2://10.0.0.1:443/;ssl=true;sslTrustStore=/cert/gateway.jks;trustStorePassword=${GATEWAY_JKS_PASSWORD};"
                     + "transportMode=http;httpPath=gateway-path/topology2/hive", hiveServer.get().getServiceUrl());
             assertEquals("HIVE", hiveServer.get().getKnoxService());
             assertEquals("Hive Server", hiveServer.get().getDisplayName());

@@ -142,7 +142,7 @@ public class ClusterProxyServiceTest {
 
     private String configUpdateRequest(String clusterIdentifier) {
         return JsonUtil.writeValueAsStringSilent(of("clusterCrn", clusterIdentifier,
-                "uriOfKnox", "https://10.10.10.10:8443/test-cluster"));
+                "uriOfKnox", "https://10.10.10.10:443/test-cluster"));
     }
 
     @After
