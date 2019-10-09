@@ -38,6 +38,15 @@ public class ImageCatalogMockServerSetup implements AutoCloseable {
 
     public void configureImgCatalogMock() {
         sparkServer = sparkServerFactory.construct();
+        startMockImageCatalogs();
+    }
+
+    public void configureImgCatalogWithExistingSparkServer(SparkServer sparkServer) {
+        this.sparkServer = sparkServer;
+        startMockImageCatalogs();
+    }
+
+    private void startMockImageCatalogs() {
         String jsonPreparedICResponse = patchCbVersion(responseFromJsonFile("imagecatalog/catalog.json"), testParameter);
         String jsonFreeIPACatalogResponse = responseFromJsonFile("imagecatalog/freeipa.json");
         String jsonPreparedPrewarmICResponse = patchCbVersion(responseFromJsonFile("imagecatalog/catalog-with-prewarmed.json"), testParameter);

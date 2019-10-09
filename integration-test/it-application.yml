@@ -6,7 +6,7 @@ mock:
       url: https://test:9443/imagecatalog
 
 integrationtest:
-  threadCount: 4
+  threadCount: 8
   parallel: classes
   defaultBlueprintName: hdp-small-default
   outputdir: /it

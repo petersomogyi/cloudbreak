@@ -41,7 +41,8 @@ public class MockedTestContext extends TestContext implements AutoCloseable {
     @PostConstruct
     private void init() {
         sparkServer = sparkServerFactory.construct();
-        imageCatalogMockServerSetup.configureImgCatalogMock();
+        //imageCatalogMockServerSetup.configureImgCatalogMock();
+        imageCatalogMockServerSetup.configureImgCatalogWithExistingSparkServer(sparkServer);
         model = new DefaultModel();
         String[] activeProfiles = applicationContext.getEnvironment().getActiveProfiles();
         model.startModel(sparkServer.getSparkService(), mockServerAddress, Arrays.asList(activeProfiles));
