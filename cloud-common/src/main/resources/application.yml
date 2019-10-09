@@ -240,7 +240,7 @@ cb:
   nginx:
     port: 9443
   knox:
-    port: 8443
+    port: 443
   https:
     port: 443
   ssh:
