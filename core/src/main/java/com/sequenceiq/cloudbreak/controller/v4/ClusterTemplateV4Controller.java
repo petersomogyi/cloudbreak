@@ -71,9 +71,12 @@ public class ClusterTemplateV4Controller extends NotificationController implemen
             Set<ClusterTemplateViewV4Response> responses = transactionService.required(() ->
                     converterUtil.convertAllAsSet(views, ClusterTemplateViewV4Response.class));
             environmentServiceDecorator.prepareEnvironments(responses);
+
             Set<ClusterTemplateViewV4Response> validTemplates = responses.stream()
                     .filter(response -> clusterTemplateService.isUsableClusterTemplate(response))
                     .collect(Collectors.toSet());
+
+            clusterTemplateService.cleanUpInvalidClusterDefinitions(workspaceId);
             return new ClusterTemplateViewV4Responses(validTemplates);
         } catch (TransactionExecutionException e) {
             LOGGER.warn("Unable to find cluster definitions due to {}", e.getMessage());

@@ -23,14 +23,19 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import com.sequenceiq.cloudbreak.api.endpoint.v4.clustertemplate.responses.ClusterTemplateViewV4Response;
+import com.sequenceiq.cloudbreak.api.endpoint.v4.common.CompactViewV4Response;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.common.ResourceStatus;
+import com.sequenceiq.cloudbreak.api.util.ConverterUtil;
 import com.sequenceiq.cloudbreak.auth.ThreadBasedUserCrnProvider;
 import com.sequenceiq.cloudbreak.auth.altus.Crn;
+import com.sequenceiq.cloudbreak.common.service.TransactionService;
+import com.sequenceiq.cloudbreak.common.service.TransactionService.TransactionExecutionException;
 import com.sequenceiq.cloudbreak.domain.Network;
 import com.sequenceiq.cloudbreak.domain.stack.Stack;
 import com.sequenceiq.cloudbreak.domain.stack.cluster.Cluster;
 import com.sequenceiq.cloudbreak.domain.stack.cluster.ClusterTemplate;
 import com.sequenceiq.cloudbreak.domain.stack.cluster.ClusterTemplateId;
+import com.sequenceiq.cloudbreak.domain.stack.cluster.ClusterTemplateView;
 import com.sequenceiq.cloudbreak.exception.BadRequestException;
 import com.sequenceiq.cloudbreak.exception.UnableToDeleteClusterDefinitionException;
 import com.sequenceiq.cloudbreak.init.clustertemplate.ClusterTemplateLoaderService;
@@ -48,6 +53,7 @@ import com.sequenceiq.cloudbreak.service.stack.StackTemplateService;
 import com.sequenceiq.cloudbreak.service.user.UserService;
 import com.sequenceiq.cloudbreak.workspace.model.Workspace;
 import com.sequenceiq.cloudbreak.workspace.repository.workspace.WorkspaceResourceRepository;
+import com.sequenceiq.distrox.v1.distrox.service.EnvironmentServiceDecorator;
 
 @Service
 public class ClusterTemplateService extends AbstractWorkspaceAwareResourceService<ClusterTemplate> {
@@ -95,6 +101,15 @@ public class ClusterTemplateService extends AbstractWorkspaceAwareResourceServic
 
     @Inject
     private EnvironmentClientService environmentClientService;
+
+    @Inject
+    private TransactionService transactionService;
+
+    @Inject
+    private EnvironmentServiceDecorator environmentServiceDecorator;
+
+    @Inject
+    private ConverterUtil converterUtil;
 
     @Override
     protected WorkspaceResourceRepository<ClusterTemplate, Long> repository() {
@@ -261,6 +276,31 @@ public class ClusterTemplateService extends AbstractWorkspaceAwareResourceServic
                 String message = format("Unable to delete the following cluster definitions: %s", join(", ", failedToDeleteClusterTemplateNames));
                 throw new UnableToDeleteClusterDefinitionException(message);
             }
+        }
+    }
+
+    public void cleanUpInvalidClusterDefinitions(final Long workspaceId) {
+        try {
+            LOGGER.debug("About to delete cluster definition(s) which has no associated existing environment.");
+            Set<ClusterTemplateView> views = transactionService.required(() -> clusterTemplateViewService.findAllByNotDeletedInWorkspace(workspaceId));
+
+            LOGGER.debug("Converting ClusterTemplateViews to ClusterTemplateViewV4Response for proper environment property decoration");
+            Set<ClusterTemplateViewV4Response> viewResponses = transactionService.required(() ->
+                    converterUtil.convertAllAsSet(views, ClusterTemplateViewV4Response.class));
+
+            environmentServiceDecorator.prepareEnvironments(viewResponses);
+
+            Set<String> invalidTemplateNames = viewResponses.stream()
+                    .filter(response -> !isUsableClusterTemplate(response))
+                    .map(CompactViewV4Response::getName)
+                    .collect(toSet());
+
+            if (!invalidTemplateNames.isEmpty()) {
+                LOGGER.debug("About to delete invalid cluster definition(s): [{}]", String.join(", ", invalidTemplateNames));
+                transactionService.required(() -> deleteMultiple(invalidTemplateNames, workspaceId));
+            }
+        } catch (TransactionExecutionException e) {
+            LOGGER.warn("Unable to delete invalid cluster definition(s) due to: {}", e.getMessage());
         }
     }
 
