@@ -20,7 +20,7 @@ public class ImageCatalogCreateRetryAction implements Action<ImageCatalogTestDto
     @Override
     public ImageCatalogTestDto action(TestContext testContext, ImageCatalogTestDto testDto, CloudbreakClient client) throws Exception {
         Log.log(LOGGER, format(" Name: %s", testDto.getRequest().getName()));
-        Log.logJSON(LOGGER, format(" Image catalog post request:%n"), testDto.getRequest());
+        Log.logJSON(LOGGER, format(" Image catalog post request with retry:%n"), testDto.getRequest());
         ImageCatalogV4Response response = null;
         Exception exc = null;
         int counter = 0;
