@@ -44,7 +44,7 @@ public class ImageCatalogCreateRetryAction implements Action<ImageCatalogTestDto
         if (response != null) {
             testDto.setResponse(response);
         } else {
-            throw exc!=null? new TestException("hat en mar nem ertek semmit") : exc;
+            throw exc!=null? new TestException(" ***** ") : exc;
         }
 
         Log.logJSON(LOGGER, format(" Image catalog created  successfully:%n"), testDto.getResponse());
