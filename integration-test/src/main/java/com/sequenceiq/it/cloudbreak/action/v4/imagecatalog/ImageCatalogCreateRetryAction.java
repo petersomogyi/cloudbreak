@@ -39,7 +39,7 @@ public class ImageCatalogCreateRetryAction implements Action<ImageCatalogTestDto
                 }
             }
         }
-        while (response != null);
+        while (response == null);
 
         if (response != null) {
             testDto.setResponse(response);
