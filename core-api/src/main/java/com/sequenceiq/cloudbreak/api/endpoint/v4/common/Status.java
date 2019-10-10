@@ -49,4 +49,8 @@ public enum Status {
     public boolean isInProgress() {
         return getStatusKind().equals(StatusKind.PROGRESS);
     }
+
+    public boolean isStopped() {
+        return STOPPED == this;
+    }
 }
